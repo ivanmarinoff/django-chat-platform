@@ -13,7 +13,7 @@ class ChatConsumer(WebsocketConsumer):
         self.room_name = None
         self.room_group_name = None
         self.room = None
-        self.user = None  # new
+        self.user = None
         self.user_inbox = None
 
     def connect(self):
@@ -31,12 +31,15 @@ class ChatConsumer(WebsocketConsumer):
             self.room_group_name,
             self.channel_name,
         )
+
+        # send the user list to the newly joined user
         self.send(json.dumps({
             'type': 'user_list',
             'users': [user.username for user in self.room.online.all()],
         }))
 
         if self.user.is_authenticated:
+            # create a user inbox for private messages
             async_to_sync(self.channel_layer.group_add)(
                 self.user_inbox,
                 self.channel_name,
@@ -56,7 +59,14 @@ class ChatConsumer(WebsocketConsumer):
             self.room_group_name,
             self.channel_name,
         )
+
         if self.user.is_authenticated:
+            # delete the user inbox for private messages
+            async_to_sync(self.channel_layer.group_discard)(
+                self.user_inbox,
+                self.channel_name,
+            )
+
             # send the leave event to the room
             async_to_sync(self.channel_layer.group_send)(
                 self.room_group_name,
@@ -64,10 +74,6 @@ class ChatConsumer(WebsocketConsumer):
                     'type': 'user_leave',
                     'user': self.user.username,
                 }
-            )
-            async_to_sync(self.channel_layer.group_discard)(
-                self.user_inbox,
-                self.channel_name,
             )
             self.room.online.remove(self.user)
 
@@ -77,7 +83,6 @@ class ChatConsumer(WebsocketConsumer):
 
         if not self.user.is_authenticated:
             return
-
         if message.startswith('/pm '):
             split = message.split(' ', 2)
             target = split[1]
@@ -99,18 +104,17 @@ class ChatConsumer(WebsocketConsumer):
                 'message': target_msg,
             }))
             return
-        # new
 
         # send chat message event to the room
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
                 'type': 'chat_message',
-                'user': self.user.username,  # new
+                'user': self.user.username,
                 'message': message,
             }
         )
-        Message.objects.create(user=self.user, room=self.room, content=message)  # new
+        Message.objects.create(user=self.user, room=self.room, content=message)
 
     def chat_message(self, event):
         self.send(text_data=json.dumps(event))
@@ -121,8 +125,8 @@ class ChatConsumer(WebsocketConsumer):
     def user_leave(self, event):
         self.send(text_data=json.dumps(event))
 
-    def private_message(self, event):
-        self.send(text_data=json.dumps(event))
-
-    def private_message_delivered(self, event):
-        self.send(text_data=json.dumps(event))
+    # def private_message(self, event):
+    #     self.send(text_data=json.dumps(event))
+    #
+    # def private_message_delivered(self, event):
+    #     self.send(text_data=json.dumps(event))

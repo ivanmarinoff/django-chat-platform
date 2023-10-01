@@ -35,7 +35,6 @@ chatMessageInput.onkeyup = function (e) {
 // clear the 'chatMessageInput' and forward the message
 chatMessageSend.onclick = function () {
     if (chatMessageInput.value.length === 0) return;
-    // TODO: forward the message to the WebSocket
     chatSocket.send(JSON.stringify({
         "message": chatMessageInput.value,
     }));
@@ -65,10 +64,7 @@ function connect() {
 
         switch (data.type) {
             case "chat_message":
-                chatLog.value += data.user + ": " + data.message + "\n";  // new
-                break;
-            default:
-                console.error("Unknown message type!");
+                chatLog.value += data.user + ": " + data.message + "\n";
                 break;
             case "user_list":
                 for (let i = 0; i < data.users.length; i++) {
@@ -83,12 +79,15 @@ function connect() {
                 chatLog.value += data.user + " left the room.\n";
                 onlineUsersSelectorRemove(data.user);
                 break;
-            case "private_message":
-                chatLog.value += "PM from " + data.user + ": " + data.message + "\n";
+            default:
+                console.error("Unknown message type!");
                 break;
-            case "private_message_delivered":
-                chatLog.value += "PM to " + data.target + ": " + data.message + "\n";
-                break;
+            // case "private_message":
+            //     chatLog.value += "PM from " + data.user + ": " + data.message + "\n";
+            //     break;
+            // case "private_message_delivered":
+            //     chatLog.value += "PM to " + data.target + ": " + data.message + "\n";
+            //     break;
         }
 
 
@@ -103,10 +102,10 @@ function connect() {
     }
 }
 
-onlineUsersSelector.onchange = function () {
-    chatMessageInput.value = "/pm " + onlineUsersSelector.value + " ";
-    onlineUsersSelector.value = null;
-    chatMessageInput.focus();
-};
+// onlineUsersSelector.onchange = function () {
+//     chatMessageInput.value = "/pm " + onlineUsersSelector.value + " ";
+//     onlineUsersSelector.value = null;
+//     chatMessageInput.focus();
+// };
 
 connect();

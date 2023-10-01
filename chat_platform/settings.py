@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "chat_platform.chat",
+    "chat_platform.chat.apps.ChatConfig",
     "channels",
 ]
 
