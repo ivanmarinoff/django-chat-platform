@@ -44,5 +44,6 @@
             {{ room.name|json_script:"roomName" }}
         </div>
         <script src="{% static 'room.js' %}"></script>
+    {% csrf_token %}
     </body>
 </html>
